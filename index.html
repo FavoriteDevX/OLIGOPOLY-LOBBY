@@ -1,0 +1,327 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OLIGOPOLY & LOBBY // Tech Hegemony Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #090d16;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(51, 65, 85, 0.6);
+        }
+        .pulse-glow {
+            animation: pulseGlow 2.5s infinite ease-in-out;
+        }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 15px rgba(56, 189, 248, 0.15); }
+            50% { box-shadow: 0 0 25px rgba(56, 189, 248, 0.4); }
+        }
+        .ticker-wrap {
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .ticker-move {
+            display: inline-block;
+            animation: ticker 35s linear infinite;
+        }
+        @keyframes ticker {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-sky-500 selection:text-white">
+
+    <!-- ==================== FACTION SELECTION MODAL ==================== -->
+    <div id="faction-modal" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+        <div class="max-w-5xl w-full my-auto">
+            <div class="text-center mb-8">
+                <div class="inline-block px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/30 text-sky-400 font-mono text-xs mb-3 tracking-widest uppercase">
+                    Antitrust & Market Dominance Simulation
+                </div>
+                <h1 class="text-4xl md:text-5xl font-black tracking-tight text-white mb-2">
+                    OLIGOPOLY <span class="text-sky-500">&</span> LOBBY
+                </h1>
+                <p class="text-slate-400 max-w-2xl mx-auto text-sm md:text-base">
+                    Select your Tech Conglomerate. Absorb emerging startups, poach key talent, weaponize Congress, and bankrupt your rivals before Antitrust regulators break you up.
+                </p>
+            </div>
+
+            <!-- Faction Cards Grid -->
+            <div id="faction-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Populated via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== ENDGAME / VICTORY MODAL ==================== -->
+    <div id="endgame-modal" class="hidden fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-lg flex items-center justify-center p-4">
+        <div class="glass-panel max-w-lg w-full rounded-2xl p-8 text-center border-2 border-sky-500/50 shadow-2xl">
+            <div id="endgame-icon" class="text-6xl mb-4">🏆</div>
+            <h2 id="endgame-title" class="text-3xl font-black text-white mb-2">MONOPOLY ACHIEVED</h2>
+            <p id="endgame-desc" class="text-slate-300 text-sm mb-6 leading-relaxed"></p>
+            <div id="endgame-stats" class="bg-slate-900/90 rounded-xl p-4 mb-6 text-left font-mono text-xs space-y-2 border border-slate-800">
+                <!-- Stats -->
+            </div>
+            <button onclick="location.reload()" class="w-full py-3.5 px-6 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold rounded-xl transition shadow-lg shadow-sky-500/25">
+                Start New Fiscal Cycle
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== TOP HEADER & NEWS TICKER ==================== -->
+    <header class="border-b border-slate-800 bg-slate-900/90 sticky top-0 z-30">
+        <!-- News Ticker -->
+        <div class="bg-slate-950 border-b border-slate-800/80 py-1.5 px-4 flex items-center gap-3 text-xs font-mono">
+            <span class="bg-rose-500/20 text-rose-400 border border-rose-500/30 px-2 py-0.5 rounded font-bold shrink-0">LIVE WIRE</span>
+            <div class="ticker-wrap w-full text-slate-400">
+                <div id="news-ticker" class="ticker-move">
+                    MARKET OPEN: Tech sector valuations reach historic highs as Capitol Hill debates new AI & Data Privacy frameworks...
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Player HUD -->
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-4">
+            <!-- Brand Identity -->
+            <div class="flex items-center gap-3">
+                <div id="player-logo" class="w-11 h-11 rounded-xl flex items-center justify-center text-2xl font-black shadow-lg">
+                    🌐
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 id="player-name" class="font-black text-lg text-white tracking-tight">SELECT CORP</h1>
+                        <span id="player-ticker" class="font-mono text-xs px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">$TECH</span>
+                    </div>
+                    <p id="player-motto" class="text-xs text-slate-400 italic">"Don't be regulated."</p>
+                </div>
+            </div>
+
+            <!-- Core Metrics -->
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-4 flex-1 max-w-3xl">
+                <div class="bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2">
+                    <div class="text-[10px] font-mono text-slate-400 uppercase">Cash Reserves</div>
+                    <div id="stat-cash" class="text-base sm:text-lg font-bold text-emerald-400 font-mono">$0.0B</div>
+                </div>
+                <div class="bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2">
+                    <div class="text-[10px] font-mono text-slate-400 uppercase">Market Share</div>
+                    <div id="stat-share" class="text-base sm:text-lg font-bold text-sky-400 font-mono">25.0%</div>
+                </div>
+                <div class="bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2">
+                    <div class="text-[10px] font-mono text-slate-400 uppercase">Lobby Power</div>
+                    <div id="stat-lobby" class="text-base sm:text-lg font-bold text-amber-400 font-mono">10 LP</div>
+                </div>
+                <div class="bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2">
+                    <div class="text-[10px] font-mono text-slate-400 uppercase">DOJ Heat</div>
+                    <div class="flex items-center gap-2">
+                        <div id="stat-heat" class="text-base sm:text-lg font-bold text-rose-400 font-mono">15%</div>
+                    </div>
+                </div>
+                <div class="bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 col-span-2 sm:col-span-1 flex flex-col justify-center">
+                    <div class="text-[10px] font-mono text-slate-400 uppercase">Quarter / AP</div>
+                    <div class="flex items-center justify-between">
+                        <span id="stat-quarter" class="text-sm font-bold text-white font-mono">Q1 Y1</span>
+                        <span id="stat-ap" class="text-xs font-bold px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 font-mono">3/3 AP</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Next Quarter Button -->
+            <button id="end-turn-btn" onclick="endQuarter()" class="w-full sm:w-auto px-5 py-3 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-sky-500/20 transition flex items-center justify-center gap-2 cursor-pointer">
+                <span>End Quarter</span>
+                <span class="text-xs bg-black/30 px-2 py-0.5 rounded font-mono">➔</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- ==================== MAIN WORKSPACE ==================== -->
+    <main class="max-w-7xl w-full mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1">
+
+        <!-- LEFT COLUMN: Rival Conglomerates & Market Dominance (4 Cols) -->
+        <section class="lg:col-span-4 space-y-5">
+            <!-- Market Share Bar -->
+            <div class="glass-panel rounded-2xl p-4">
+                <div class="flex justify-between items-center mb-2">
+                    <h2 class="text-xs font-mono font-bold uppercase tracking-wider text-slate-400">Global Tech Monopoly Index</h2>
+                    <span class="text-xs font-mono text-sky-400">Goal: 65% Share</span>
+                </div>
+                <div id="market-share-bar" class="w-full h-4 bg-slate-800 rounded-full overflow-hidden flex shadow-inner">
+                    <!-- Dynamic segments -->
+                </div>
+                <div id="market-legend" class="flex flex-wrap gap-3 mt-3 text-[11px] font-mono">
+                    <!-- Dynamic legend -->
+                </div>
+            </div>
+
+            <!-- Rivals List -->
+            <div class="glass-panel rounded-2xl p-4">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                        <span>⚔️</span> Rival Conglomerates
+                    </h2>
+                    <span class="text-[11px] font-mono text-slate-400">Select target to strike</span>
+                </div>
+                <div id="rivals-container" class="space-y-3">
+                    <!-- Rival Cards Populated via JS -->
+                </div>
+            </div>
+
+            <!-- Acquired Startups Portfolio -->
+            <div class="glass-panel rounded-2xl p-4">
+                <h2 class="text-sm font-bold uppercase tracking-wider text-white mb-2 flex items-center gap-2">
+                    <span>🧬</span> Absorbed IP & Subsidiaries
+                </h2>
+                <div id="portfolio-list" class="flex flex-wrap gap-2 text-xs">
+                    <span class="text-slate-500 italic">No subsidiaries acquired yet.</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- CENTER COLUMN: Operations Deck (Tabs: Market & Startups, Black Ops, Capitol Hill) (5 Cols) -->
+        <section class="lg:col-span-5 flex flex-col gap-4">
+            <!-- Navigation Tabs -->
+            <div class="grid grid-cols-3 gap-2 bg-slate-900/90 p-1.5 rounded-xl border border-slate-800">
+                <button onclick="switchTab('startups')" id="tab-startups" class="tab-btn py-2.5 px-3 rounded-lg text-xs font-bold transition bg-sky-500 text-slate-950 shadow">
+                    🚀 Startup M&A
+                </button>
+                <button onclick="switchTab('espionage')" id="tab-espionage" class="tab-btn py-2.5 px-3 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white">
+                    🕵️ Corporate Ops
+                </button>
+                <button onclick="switchTab('lobby')" id="tab-lobby" class="tab-btn py-2.5 px-3 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white">
+                    🏛️ Capitol Lobby
+                </button>
+            </div>
+
+            <!-- TAB 1: STARTUP MARKET (Acquire or Kill) -->
+            <div id="panel-startups" class="glass-panel rounded-2xl p-5 flex-1 space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <div>
+                        <h3 class="font-bold text-white text-base">Silicon Valley Deal Flow</h3>
+                        <p class="text-xs text-slate-400">Integrate startups for passive revenue, or execute a <span class="text-rose-400 font-semibold">Killer Acquisition</span> to shut them down before rivals buy them.</p>
+                    </div>
+                </div>
+                <div id="startups-list" class="space-y-3">
+                    <!-- Startups populated via JS -->
+                </div>
+            </div>
+
+            <!-- TAB 2: CORPORATE ESPIONAGE & SABOTAGE -->
+            <div id="panel-espionage" class="hidden glass-panel rounded-2xl p-5 flex-1 space-y-4">
+                <div class="border-b border-slate-800 pb-3">
+                    <h3 class="font-bold text-white text-base">Asymmetric Warfare & PR Sabotage</h3>
+                    <p class="text-xs text-slate-400">Target selected rival: <span id="selected-rival-badge" class="font-bold text-sky-400">None</span></p>
+                </div>
+
+                <!-- Target Selector -->
+                <div>
+                    <label class="text-[11px] font-mono uppercase text-slate-400 block mb-1.5">Active Target Conglomerate:</label>
+                    <div id="target-selector" class="grid grid-cols-3 gap-2">
+                        <!-- Buttons populated via JS -->
+                    </div>
+                </div>
+
+                <!-- Operations Cards -->
+                <div id="ops-list" class="space-y-3">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+
+            <!-- TAB 3: CAPITOL HILL & REGULATORY CAPTURE -->
+            <div id="panel-lobby" class="hidden glass-panel rounded-2xl p-5 flex-1 space-y-4">
+                <div class="border-b border-slate-800 pb-3 flex justify-between items-center">
+                    <div>
+                        <h3 class="font-bold text-white text-base">Regulatory Capture & Bills</h3>
+                        <p class="text-xs text-slate-400">Spend Cash to buy Lobby Power (LP), then pass legislation that cripples competitors.</p>
+                    </div>
+                    <button onclick="buyLobbyPower()" class="px-3 py-2 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 rounded-xl text-xs font-bold transition cursor-pointer shrink-0">
+                        +10 LP ($4.0B)
+                    </button>
+                </div>
+
+                <!-- Active Bills -->
+                <div id="bills-list" class="space-y-3">
+                    <!-- Bills populated via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- RIGHT COLUMN: Intelligence Feed & Faction Perks (3 Cols) -->
+        <section class="lg:col-span-3 flex flex-col gap-4">
+            <!-- Active Legislation Banner -->
+            <div class="glass-panel rounded-2xl p-4">
+                <h3 class="text-xs font-mono font-bold uppercase tracking-wider text-amber-400 mb-2 flex items-center gap-1.5">
+                    <span>⚖️</span> Enacted Federal Laws
+                </h3>
+                <div id="active-laws-list" class="space-y-2 text-xs">
+                    <div class="text-slate-500 italic">Laissez-faire era: No active tech regulations.</div>
+                </div>
+            </div>
+
+            <!-- Faction Passive & Ultimate -->
+            <div class="glass-panel rounded-2xl p-4 border-l-4 border-l-sky-500">
+                <div class="text-[10px] font-mono uppercase text-sky-400 mb-1">Corporate DNA & Passive</div>
+                <h3 id="perk-title" class="font-bold text-sm text-white mb-1">Algorithmic Dominance</h3>
+                <p id="perk-desc" class="text-xs text-slate-400 leading-relaxed mb-3">Passive description here.</p>
+                <button id="special-ability-btn" onclick="triggerSpecialAbility()" class="w-full py-2 px-3 bg-sky-500/20 hover:bg-sky-500/30 border border-sky-500/40 text-sky-300 rounded-lg text-xs font-bold transition cursor-pointer">
+                    ⚡ Execute Boardroom Power
+                </button>
+            </div>
+
+            <!-- Terminal / Event Log -->
+            <div class="glass-panel rounded-2xl p-4 flex-1 flex flex-col min-h-[260px]">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-xs font-mono font-bold uppercase tracking-wider text-slate-400">Encrypted Boardroom Log</h3>
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                </div>
+                <div id="game-log" class="flex-1 overflow-y-auto space-y-2 pr-1 font-mono text-[11px] max-h-[340px]">
+                    <!-- Logs populated via JS -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="glass-panel border-l-4 border-sky-500 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 max-w-sm">
+            <span id="toast-icon" class="text-xl">📢</span>
+            <div id="toast-msg" class="text-xs font-medium text-white">Action completed.</div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== REAL BIG TECH FACTIONS & SVG BRAND LOGOS ====================
+        const BRAND_LOGOS = {
+            apple: `<svg viewBox="0 0 24 24" class="w-6 h-6 fill-current"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.33c.64-.78 1.08-1.86.96-2.94-.93.04-2.06.62-2.72 1.4-.58.68-1.1 1.79-.96 2.84 1.04.08 2.08-.52 2.72-1.3z"/></svg>`,
+            microsoft: `<svg viewBox="0 0 24 24" class="w-6 h-6"><rect x="2" y="2" width="9.5" height="9.5" fill="#f25022"/><rect x="12.5" y="2" width="9.5" height="9.5" fill="#7fba00"/><rect x="2" y="12.5" width="9.5" height="9.5" fill="#00a4ef"/><rect x="12.5" y="12.5" width="9.5" height="9.5" fill="#ffb900"/></svg>`,
+            google: `<svg viewBox="0 0 24 24" class="w-6 h-6"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.14C3.26 21.3 7.31 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.24c-.24-.72-.38-1.49-.38-2.24s.14-1.52.38-2.24V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.99-3.14z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.99 3.14c.95-2.85 3.6-4.96 6.72-4.96z"/></svg>`,
+            meta: `<svg viewBox="0 0 24 24" class="w-6 h-6 fill-current"><path d="M16.92 6.5c-1.76 0-3.23 1.07-4.92 3.23-1.69-2.16-3.16-3.23-4.92-3.23C3.92 6.5 1.5 9.04 1.5 12.35c0 3.19 2.21 5.15 4.86 5.15 1.98 0 3.55-1.22 5.64-4.13 2.09 2.91 3.66 4.13 5.64 4.13 2.65 0 4.86-1.96 4.86-5.15 0-3.31-2.42-5.85-5.58-5.85zm-10.56 8.8c-1.54 0-2.66-1.15-2.66-2.95 0-1.93 1.29-3.65 3.25-3.65 1.25 0 2.38.86 3.84 2.86-1.64 2.41-2.91 3.74-4.43 3.74zm11.28 0c-1.52 0-2.79-1.33-4.43-3.74 1.46-2 2.59-2.86 3.84-2.86 1.96 0 3.25 1.72 3.25 3.65 0 1.8-1.12 2.95-2.66 2.95z"/></svg>`,
+            amazon: `<svg viewBox="0 0 24 24" class="w-6 h-6 fill-current"><path d="M15.93 17.09c-2.32 1.71-5.69 2.62-8.59 2.62-4.06 0-7.72-1.5-10.48-4-.22-.2-.02-.47.24-.32 2.99 1.74 6.69 2.79 10.51 2.79 2.58 0 5.41-.53 8.02-1.64.39-.
